@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Material To-Do</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .app-bar {
+            background-color: #6200ee;
+            color: white;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .app-title {
+            font-size: 1.5rem;
+            font-weight: 500;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .input-card {
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+        }
+        
+        .task-input {
+            flex: 1;
+            border: none;
+            border-bottom: 2px solid #6200ee;
+            font-size: 1rem;
+            padding: 8px 0;
+            font-family: 'Roboto', sans-serif;
+            outline: none;
+        }
+        
+        .add-btn {
+            background-color: #6200ee;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .add-btn:hover {
+            background-color: #3700b3;
+        }
+        
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn.active {
+            background-color: #6200ee;
+            color: white;
+            border-color: #6200ee;
+        }
+        
+        .filter-btn:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .filter-btn.active:hover {
+            background-color: #3700b3;
+        }
+        
+        .task-list {
+            list-style: none;
+        }
+        
+        .task-item {
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .task-item.pinned {
+            border-left: 4px solid #ff9800;
+        }
+        
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .task-checkbox {
+            margin-right: 16px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        .task-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .task-text {
+            font-size: 1rem;
+            transition: text-decoration 0.3s, color 0.3s;
+            margin-bottom: 4px;
+        }
+        
+        .task-text.completed {
+            text-decoration: line-through;
+            color: #999;
+        }
+        
+        .task-date {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .pin-btn, .delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+            display: flex;
+            width: 32px;
+            height: 32px;
+        }
+
+        .pin-btn {
+            color: #ff9800;
+        }
+
+        .delete-btn {
+            color: #f44336;
+        }
+
+        .pin-btn:hover {
+            background-color: rgba(255, 152, 0, 0.1);
+        }
+
+        .delete-btn:hover {
+            background-color: rgba(244, 67, 54, 0.1);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .empty-state .material-icons {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <header class="app-bar">
+        <h1 class="app-title">我的待办事项</h1>
+    </header>
+    
+    <main class="container">
+        <div class="input-card">
+            <input type="text" class="task-input" placeholder="添加新任务..." id="taskInput">
+            <button class="add-btn" id="addBtn">
+                <span class="material-icons">add</span>
+            </button>
+        </div>
+        
+        <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all">全部</button>
+            <button class="filter-btn" data-filter="active">进行中</button>
+            <button class="filter-btn" data-filter="completed">已完成</button>
+            <button class="filter-btn" data-filter="pinned">已置顶</button>
+        </div>
+        
+        <ul class="task-list" id="taskList">
+            <!-- 任务项会动态添加到这里 -->
+        </ul>
+        
+        <div class="empty-state" id="emptyState">
+            <span class="material-icons">check_circle_outline</span>
+            <p>还没有任务，添加一个开始吧！</p>
+        </div>
+    </main>
+    
+    <script>
+        class TodoApp {
+            constructor() {
+                this.tasks = this.loadTasks();
+                this.currentFilter = 'all';
+                this.taskInput = document.getElementById('taskInput');
+                this.addBtn = document.getElementById('addBtn');
+                this.taskList = document.getElementById('taskList');
+                this.emptyState = document.getElementById('emptyState');
+                this.filterButtons = document.querySelectorAll('.filter-btn');
+                
+                this.init();
+            }
+            
+            init() {
+                this.addBtn.addEventListener('click', () => this.addTask());
+                this.taskInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.addTask();
+                });
+                
+                // 绑定过滤按钮事件
+                this.filterButtons.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const filter = e.target.dataset.filter;
+                        this.setFilter(filter);
+                    });
+                });
+                
+                this.render();
+            }
+            
+            loadTasks() {
+                const saved = localStorage.getItem('materialTodo');
+                return saved ? JSON.parse(saved) : [];
+            }
+            
+            saveTasks() {
+                localStorage.setItem('materialTodo', JSON.stringify(this.tasks));
+            }
+            
+            addTask() {
+                const text = this.taskInput.value.trim();
+                if (!text) return;
+                
+                const task = {
+                    id: Date.now(),
+                    text: text,
+                    completed: false,
+                    pinned: false,
+                    date: this.formatDate(new Date())
+                };
+                
+                this.tasks.unshift(task);
+                this.taskInput.value = '';
+                this.saveTasks();
+                this.render();
+            }
+            
+            formatDate(date) {
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                return `${month}-${day}`;
+            }
+            
+            toggleTask(id) {
+                const task = this.tasks.find(t => t.id === id);
+                if (task) {
+                    task.completed = !task.completed;
+                    this.saveTasks();
+                    this.render();
+                }
+            }
+            
+            togglePin(id) {
+                const task = this.tasks.find(t => t.id === id);
+                if (task) {
+                    task.pinned = !task.pinned;
+                    this.saveTasks();
+                    this.render();
+                }
+            }
+            
+            deleteTask(id) {
+                this.tasks = this.tasks.filter(t => t.id !== id);
+                this.saveTasks();
+                this.render();
+            }
+            
+            setFilter(filter) {
+                this.currentFilter = filter;
+                
+                // 更新按钮状态
+                this.filterButtons.forEach(btn => {
+                    if (btn.dataset.filter === filter) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                
+                this.render();
+            }
+            
+            getFilteredTasks() {
+                return this.tasks.filter(task => {
+                    if (this.currentFilter === 'all') return true;
+                    if (this.currentFilter === 'active') return !task.completed;
+                    if (this.currentFilter === 'completed') return task.completed;
+                    if (this.currentFilter === 'pinned') return task.pinned;
+                    return true;
+                });
+            }
+            
+            render() {
+                const filteredTasks = this.getFilteredTasks();
+                
+                if (filteredTasks.length === 0) {
+                    this.taskList.innerHTML = '';
+                    this.emptyState.style.display = 'block';
+                    return;
+                }
+                
+                this.emptyState.style.display = 'none';
+                
+                // 置顶任务优先显示
+                const sortedTasks = [...filteredTasks].sort((a, b) => {
+                    if (a.pinned && !b.pinned) return -1;
+                    if (!a.pinned && b.pinned) return 1;
+                    return 0;
+                });
+                
+                this.taskList.innerHTML = sortedTasks.map(task => `
+                    <li class="task-item ${task.pinned ? 'pinned' : ''}">
+                        <input type="checkbox" 
+                               class="task-checkbox" 
+                               ${task.completed ? 'checked' : ''}
+                               onchange="app.toggleTask(${task.id})">
+                        <div class="task-content">
+                            <span class="task-text ${task.completed ? 'completed' : ''}">
+                                ${task.text}
+                            </span>
+                            <span class="task-date">${task.date}</span>
+                        </div>
+                        <div class="task-actions">
+                            <button class="pin-btn" onclick="app.togglePin(${task.id})">
+                                <span class="material-icons">
+                                    ${task.pinned ? 'push_pin' : 'push_pin_outline'}
+                                </span>
+                            </button>
+                            <button class="delete-btn" onclick="app.deleteTask(${task.id})">
+                                <span class="material-icons">delete</span>
+                            </button>
+                        </div>
+                    </li>
+                `).join('');
+            }
+        }
+        
+        const app = new TodoApp();
+    </script>
+</body>
+</html>

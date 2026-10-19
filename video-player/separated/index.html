@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频播放器</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="video-player" id="video-player">
+        <video id="my-video" preload="auto">
+            <source src="紫色の向日葵.mp4" type="video/mp4">
+            您的浏览器不支持 HTML5 视频标签
+        </video>
+
+        <div class="loading" id="loading">加载中...</div>
+
+        <div class="controls" id="controls">
+            <button class="btn play-pause" id="play-pause">▶</button>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar">
+                    <div class="progress-filled" id="progress-filled"></div>
+                    <div class="progress-thumb" id="progress-thumb"></div>
+                </div>
+                <span class="time-display" id="time-display">00:00 / 00:00</span>
+            </div>
+            
+            <div class="volume-control">
+                <button class="btn volume-btn" id="volume-btn">🔊</button>
+                <div class="volume-slider-container">
+                    <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.01" value="0.2">
+                    <div class="volume-value" id="volume-value">20</div>
+                </div>
+            </div>
+            
+            <button class="btn speed" id="speed">1x</button>
+            <button class="btn fullscreen" id="fullscreen">⛶</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

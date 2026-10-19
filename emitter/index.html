@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>光束发射器</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="theme-toggle">
+        <svg id="sun-icon" class="theme-toggle-icon" viewBox="0 0 16 16">
+            <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708"/>
+        </svg>
+        
+        <svg id="moon-icon" class="theme-toggle-icon" viewBox="0 0 16 16">
+            <path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"/>
+        </svg>
+    </div>
+    
+    <div id="preview-beam" class="beam-element"></div>
+    <div id="emitter">
+        <div class="center-light"></div>
+    </div>
+    <div id="angle-indicator">角度: 0°</div>
+    
+    <script>
+        // 全局配置
+        const CONFIG = {
+            MAX_BEAMS: 5,
+            LONG_PRESS_DURATION: 300,
+            PREVIEW_BEAM_LENGTH: 150,
+            BEAM_ANIMATION_DELAY: 10,
+            BEAM_FADE_DELAY: 800,
+            MAX_ANGLE: 60,
+            MIN_ANGLE: -60
+        };
+        
+        // 应用状态管理
+        const State = {
+            pressTimer: null,
+            isPressing: false,
+            pressStartTime: 0,
+            currentAngle: 0,
+            lastUsedAngle: 0,
+            isInRotationMode: false,
+            currentBeamIndex: 0
+        };
+        
+        // DOM 元素引用
+        const Elements = {
+            emitter: document.getElementById('emitter'),
+            previewBeam: document.getElementById('preview-beam'),
+            themeToggle: document.getElementById('theme-toggle'),
+            angleIndicator: document.getElementById('angle-indicator')
+        };
+        
+        // 光束池管理器（复用 DOM 元素提升性能）
+        const BeamManager = {
+            beamPool: [],
+            
+            init() {
+                for (let i = 0; i < CONFIG.MAX_BEAMS; i++) {
+                    const beam = document.createElement('div');
+                    beam.className = 'beam beam-element';
+                    document.body.appendChild(beam);
+                    this.beamPool.push(beam);
+                }
+            },
+            
+            getNextBeam() {
+                const beam = this.beamPool[State.currentBeamIndex];
+                State.currentBeamIndex = (State.currentBeamIndex + 1) % CONFIG.MAX_BEAMS;
+                return beam;
+            }
+        };
+        
+        // 工具函数集
+        const Utils = {
+            getEmitterPosition() {
+                const rect = Elements.emitter.getBoundingClientRect();
+                return {
+                    x: rect.left + rect.width + 10,
+                    y: rect.top + rect.height / 2
+                };
+            },
+            
+            // 根据鼠标 Y 坐标计算光束角度
+            calculateAngle(mouseY) {
+                const emitterPos = this.getEmitterPosition();
+                const deltaY = mouseY - emitterPos.y;
+                const radians = Math.atan2(deltaY, CONFIG.PREVIEW_BEAM_LENGTH);
+                let degrees = radians * (180 / Math.PI);
+                
+                return Math.max(CONFIG.MIN_ANGLE, Math.min(CONFIG.MAX_ANGLE, degrees));
+            },
+            
+            updateCursorStyles(isHidden) {
+                document.body.style.cursor = isHidden ? 'none' : 'default';
+                Elements.emitter.style.cursor = isHidden ? 'none' : 'pointer';
+            }
+        };
+        
+        // 预览光束控制器
+        const PreviewBeam = {
+            show() {
+                const pos = Utils.getEmitterPosition();
+                Elements.previewBeam.style.top = pos.y + 'px';
+                Elements.previewBeam.style.left = pos.x + 'px';
+                Elements.previewBeam.style.opacity = '0.7';
+                Elements.previewBeam.style.width = CONFIG.PREVIEW_BEAM_LENGTH + 'px';
+                
+                this.updateAngle(State.lastUsedAngle);
+            },
+            
+            hide() {
+                Elements.previewBeam.style.opacity = '0';
+                Elements.previewBeam.style.width = '0';
+                Elements.previewBeam.style.transform = 'rotate(0deg)';
+            },
+            
+            // 更新预览光束角度和指示器
+            updateAngle(angle) {
+                State.currentAngle = angle;
+                
+                // 显示时反转符号，让向上为正、向下为负符合直觉，实际仍使用原角度
+                const displayAngle = -angle;
+                Elements.angleIndicator.textContent = `角度: ${Math.round(displayAngle)}°`;
+                
+                Elements.previewBeam.style.transform = `rotate(${angle}deg)`;
+                
+                const pos = Utils.getEmitterPosition();
+                Elements.previewBeam.style.top = pos.y + 'px';
+                Elements.previewBeam.style.left = pos.x + 'px';
+            }
+        };
+        
+        // 光束发射控制器
+        const BeamLauncher = {
+            fire(useLastAngle = false) {
+                const beam = BeamManager.getNextBeam();
+                this.resetBeamStyles(beam);
+                this.positionBeam(beam);
+                this.animateBeam(beam, useLastAngle);
+            },
+            
+            resetBeamStyles(beam) {
+                beam.style.transition = 'none';
+                beam.style.opacity = '1';
+                beam.style.width = '0';
+                beam.style.transform = `rotate(${State.currentAngle}deg)`;
+            },
+            
+            positionBeam(beam) {
+                const pos = Utils.getEmitterPosition();
+                beam.style.top = pos.y + 'px';
+                beam.style.left = pos.x + 'px';
+            },
+            
+            // 执行光束动画：展开后淡出
+            animateBeam(beam, useLastAngle = false) {
+                setTimeout(() => {
+                    beam.style.transition = 'width 0.3s ease-out, opacity 0.5s';
+                    const pos = Utils.getEmitterPosition();
+                    const angle = useLastAngle ? State.lastUsedAngle : State.currentAngle;
+                    const beamLength = (window.innerWidth - pos.x) / 
+                        Math.cos(angle * Math.PI / 180);
+                    beam.style.width = beamLength + 'px';
+                }, CONFIG.BEAM_ANIMATION_DELAY);
+                
+                setTimeout(() => {
+                    beam.style.opacity = '0';
+                }, CONFIG.BEAM_FADE_DELAY);
+            }
+        };
+        
+        // 按压状态管理器（处理长按/短按逻辑）
+        const PressManager = {
+            start() {
+                if (State.isPressing) return;
+                
+                State.isPressing = true;
+                State.pressStartTime = Date.now();
+                Elements.emitter.classList.add('pressing');
+                
+                // 长按时进入旋转模式
+                State.pressTimer = setTimeout(() => {
+                    State.isInRotationMode = true;
+                    document.body.classList.add('rotation-mode');
+                    PreviewBeam.show();
+                    Utils.updateCursorStyles(true);
+                    document.addEventListener('mousemove', this.handleMouseMove);
+                }, CONFIG.LONG_PRESS_DURATION);
+            },
+            
+            end() {
+                if (!State.isPressing) return;
+                
+                const pressDuration = Date.now() - State.pressStartTime;
+                
+                if (State.isInRotationMode) {
+                    BeamLauncher.fire(false);
+                    State.lastUsedAngle = State.currentAngle;
+                } else if (pressDuration < CONFIG.LONG_PRESS_DURATION) {
+                    State.currentAngle = State.lastUsedAngle
+                    BeamLauncher.fire(true);
+                }
+                
+                this.cleanup();
+            },
+            
+            cancel() {
+                if (State.isPressing && !State.isInRotationMode) {
+                    clearTimeout(State.pressTimer);
+                    PreviewBeam.hide();
+                    Elements.emitter.classList.remove('pressing');
+                    this.resetState();
+                    Utils.updateCursorStyles(false);
+                }
+            },
+            
+            cleanup() {
+                State.isPressing = false;
+                State.isInRotationMode = false;
+                Elements.emitter.classList.remove('pressing');
+                document.body.classList.remove('rotation-mode');
+                clearTimeout(State.pressTimer);
+                PreviewBeam.hide();
+                
+                document.removeEventListener('mousemove', this.handleMouseMove);
+                Utils.updateCursorStyles(false);
+            },
+            
+            resetState() {
+                State.isPressing = false;
+                State.isInRotationMode = false;
+            },
+            
+            handleMouseMove(e) {
+                if (!State.isInRotationMode) return;
+                
+                const angle = Utils.calculateAngle(e.clientY);
+                PreviewBeam.updateAngle(angle);
+            }
+        };
+        
+        // 事件处理器
+        const EventHandlers = {
+            bindEmitterEvents() {
+                Elements.emitter.addEventListener('mousedown', () => {
+                    PressManager.start();
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    if (State.isPressing) {
+                        PressManager.end();
+                    }
+                });
+                
+                Elements.emitter.addEventListener('mouseleave', () => {
+                    if (State.isPressing && !State.isInRotationMode) {
+                        PressManager.cancel();
+                    }
+                });
+                
+                Elements.emitter.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                });
+            },
+            
+            initThemeToggle() {
+                Elements.themeToggle.addEventListener('click', () => {
+                    document.body.classList.toggle('light-mode');
+                });
+            }
+        };
+        
+        // 应用初始化
+        function initApp() {
+            BeamManager.init();
+            EventHandlers.bindEmitterEvents();
+            EventHandlers.initThemeToggle();
+        }
+        
+        initApp();
+    </script>
+</body>
+</html>

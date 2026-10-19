@@ -1,0 +1,276 @@
+/* 基础样式 */
+body {
+  margin: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: #f5f7fa;
+  color: #2c3e50;
+  line-height: 1.5;
+}
+
+header {
+  margin-bottom: 32px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #1a365d;
+  text-align: center;
+  letter-spacing: -0.5px;
+}
+
+/* 主容器 */
+.container {
+  display: flex;
+  gap: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.panel {
+  flex: 1;
+  min-width: 320px;
+}
+
+/* 区块 */
+section {
+  background: white;
+  border: 1px solid #e2e8f0;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #4a5568;
+  text-transform: none;
+  letter-spacing: 0.5px;
+}
+
+/* 按钮 */
+button {
+  padding: 8px 16px;
+  border: 1px solid #cbd5e0;
+  background: #ffffff;
+  color: #4a5568;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+button:hover {
+  background: #f7fafc;
+  border-color: #a0aec0;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+/* 文本输入 */
+#asmInput {
+  font-family: 'SF Mono', 'Ubuntu Mono', 'Courier New', monospace;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbd5e0;
+  font-size: 15px;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+  background: #fafbfc;
+  resize: vertical;
+  min-height: 220px;
+}
+
+/* 状态显示 */
+#status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.status-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #718096;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.status-value {
+  font-size: 24px;
+  font-weight: 500;
+  font-family: 'SF Mono', 'Ubuntu Mono', 'Courier New', monospace;
+}
+
+.status-value.hex { color: #2b6cb0; }
+.status-value.flag { color: #c53030; }
+.status-value.info { color: #2f855a; }
+
+/* 输出区域 */
+#output,
+#debugLog,
+#memoryView {
+  font-family: 'SF Mono', 'Ubuntu Mono', 'Courier New', monospace;
+  font-size: 14px;
+}
+
+.log {
+  border: 1px solid #e2e8f0;
+  background: white;
+  padding: 12px;
+  height: 75px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  overflow-y: auto;
+}
+
+.debug {
+  height: 200px;
+  overflow-y: auto;
+}
+
+/* 内存视图 */
+.memory {
+  padding: 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  height: 320px;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* 辅助样式 */
+.hint {
+  font-size: 13px;
+  color: #718096;
+  margin-top: 8px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* 帮助面板 */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  margin: 40px auto;
+  padding: 0;
+  width: 90%;
+  max-width: 800px;
+  max-height: 80vh;
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #2d3748;
+}
+
+.close-btn {
+  border: none;
+  width: 30px; 
+  height: 30px;
+  background: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.modal-body {
+  padding: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+#helpModal table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+}
+
+#helpModal th,
+#helpModal td {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+#helpModal th {
+  background: #f7fafc;
+  font-weight: 600;
+}
+
+#helpModal .modal-content {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+#helpModal .modal-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* 响应式设计 */
+@media (max-width: 1000px) {
+  .container {
+    flex-direction: column;
+  }
+  
+  body {
+    margin: 16px;
+  }
+}

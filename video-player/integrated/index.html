@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频播放器</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1a1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .video-player {
+            position: relative;
+            width: 80vw;
+            height: 45vw;
+            max-width: 1200px;
+            max-height: 675px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        #my-video {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+        }
+        #my-video::-webkit-media-controls {
+            display: none !important;
+        }
+        .controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+            pointer-events: auto;
+        }
+        .btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            opacity: 0.9;
+            transition: all 0.2s;
+            padding: 0;
+            width: auto;
+        }
+        .btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        .progress-container {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 10px;
+            color: white;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 2px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
+        .progress-filled {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: #4cd964;
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+        .progress-thumb {
+            position: absolute;
+            top: 50%;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .progress-bar:hover .progress-thumb,
+        .progress-bar.dragging .progress-thumb {
+            opacity: 1;
+        }
+        .volume-control {
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding: 5px;
+        }
+        .volume-btn {
+            z-index: 2;
+        }
+        .volume-value {
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 20px;
+            text-align: center;
+            padding: 2px 4px;
+        }
+        .volume-slider {
+            width: 70px;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            outline: none;
+            transform: rotate(-90deg);
+            margin: 0;
+        }
+        .volume-slider-container {
+            position: absolute;
+            width: 24px;
+            height: 80px;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-15px);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px 8px 8px 8px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.5s, transform 0.3s ease;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .volume-slider-container::before {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: -10px;
+            right: -10px;
+            height: 25px;
+            background: transparent;
+        }
+        .volume-control:hover .volume-slider-container,
+        .volume-slider-container:hover {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateX(-50%) translateY(-15px) scale(1.02);
+        }
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #4cd964;
+        }
+        .volume-slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        .volume-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            background: #4cd964;
+        }
+        .speed {
+            font-size: 14px;
+            padding: 4px 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.2s;
+        }
+        .speed:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .settings, .fullscreen {
+            font-size: 18px;
+            padding: 4px;
+        }
+        .time-display {
+            font-family: monospace;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 16px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 16px;
+            border-radius: 4px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-player" id="video-player">
+        <video id="my-video" preload="auto">
+            <source src="紫色の向日葵.mp4" type="video/mp4">
+            您的浏览器不支持 HTML5 视频标签
+        </video>
+
+        <div class="loading" id="loading">加载中...</div>
+
+        <div class="controls" id="controls">
+            <button class="btn play-pause" id="play-pause">▶</button>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar">
+                    <div class="progress-filled" id="progress-filled"></div>
+                    <div class="progress-thumb" id="progress-thumb"></div>
+                </div>
+                <span class="time-display" id="time-display">00:00 / 00:00</span>
+            </div>
+            
+            <div class="volume-control">
+                <button class="btn volume-btn" id="volume-btn">🔊</button>
+                <div class="volume-slider-container">
+                    <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.01" value="0.2">
+                    <div class="volume-value" id="volume-value">20</div>
+                </div>
+            </div>
+            
+            <button class="btn speed" id="speed">1x</button>
+            <button class="btn fullscreen" id="fullscreen">⛶</button>
+        </div>
+    </div>
+
+    <script>
+        // 元素引用
+        const video = document.getElementById('my-video');
+        const videoPlayer = document.getElementById('video-player');
+        const controls = document.getElementById('controls');
+        const playPauseBtn = document.getElementById('play-pause');
+        const timeDisplay = document.getElementById('time-display');
+        const progressBar = document.getElementById('progress-bar');
+        const progressFilled = document.getElementById('progress-filled');
+        const progressThumb = document.getElementById('progress-thumb');
+        const volumeBtn = document.getElementById('volume-btn');
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeValue = document.getElementById('volume-value');
+        const speedBtn = document.getElementById('speed');
+        const fullscreenBtn = document.getElementById('fullscreen');
+        const loadingEl = document.getElementById('loading');
+
+        // 状态变量
+        let speedIndex = 2;
+        const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+        let isDragging = false;
+        let hideControlsTimer = null;
+        let isMouseOverControls = false;
+        let loadingTimer = null;
+        let isInFullscreen = false;
+        
+        // 快捷键相关
+        const seekStep = 5; // 进度步长（秒）
+        const volumeStep = 0.05; // 音量调节步长
+
+        // 工具函数
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateVolumeDisplay() {
+            const volumePercent = Math.round(video.volume * 100);
+            
+            if (video.volume === 0) {
+                volumeBtn.textContent = '🔇';
+            } else if (video.volume < 0.3) {
+                volumeBtn.textContent = '🔈';
+            } else if (video.volume < 0.7) {
+                volumeBtn.textContent = '🔉';
+            } else {
+                volumeBtn.textContent = '🔊';
+            }
+            
+            volumeValue.textContent = volumePercent;
+        }
+
+        // 显示/隐藏控制栏
+        function showControls() {
+            clearTimeout(hideControlsTimer);
+            controls.style.opacity = '1';
+        }
+
+        function hideControls() {
+            if (!video.paused && !isMouseOverControls) {
+                controls.style.opacity = '0';
+            }
+        }
+
+        function scheduleHideControls() {
+            clearTimeout(hideControlsTimer);
+            
+            if (!video.paused && !isMouseOverControls) {
+                hideControlsTimer = setTimeout(() => {
+                    hideControls();
+                }, 2000);
+            }
+        }
+
+        // 播放控制
+        function togglePlay() {
+            if (video.paused || video.ended) {
+                video.play();
+                playPauseBtn.textContent = '❚❚';
+                scheduleHideControls();
+            } else {
+                video.pause();
+                playPauseBtn.textContent = '▶';
+                showControls();
+            }
+        }
+
+        // 进度控制
+        function updateProgress() {
+            if (isDragging || !video.duration) return;
+            
+            const percent = (video.currentTime / video.duration) * 100;
+            progressFilled.style.width = `${percent}%`;
+            
+            if (progressThumb) {
+                progressThumb.style.left = `${percent}%`;
+            }
+            
+            timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+        }
+
+        function seek(e) {
+            const rect = progressBar.getBoundingClientRect();
+            const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            video.currentTime = percent * video.duration;
+        }
+
+        function startDrag(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            isDragging = true;
+            progressBar.classList.add('dragging');
+            showControls();
+            
+            const handleMouseMove = (moveEvent) => {
+                if (!isDragging) return;
+                
+                const rect = progressBar.getBoundingClientRect();
+                let percent = ((moveEvent.clientX - rect.left) / rect.width) * 100;
+                percent = Math.max(0, Math.min(100, percent));
+                
+                const targetTime = (percent / 100) * video.duration;
+                timeDisplay.textContent = `${formatTime(targetTime)} / ${formatTime(video.duration)}`;
+                
+                progressFilled.style.transition = 'none';
+                progressFilled.style.width = `${percent}%`;
+                
+                if (progressThumb) {
+                    progressThumb.style.transition = 'none';
+                    progressThumb.style.left = `${percent}%`;
+                }
+            };
+            
+            const handleMouseUp = (upEvent) => {
+                isDragging = false;
+                progressBar.classList.remove('dragging');
+                
+                progressFilled.style.transition = '';
+                if (progressThumb) {
+                    progressThumb.style.transition = '';
+                }
+                
+                const rect = progressBar.getBoundingClientRect();
+                let percent = ((upEvent.clientX - rect.left) / rect.width) * 100;
+                percent = Math.max(0, Math.min(100, percent));
+                video.currentTime = (percent / 100) * video.duration;
+                
+                scheduleHideControls();
+                
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+            
+            handleMouseMove(e);
+            
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+
+        // 音量控制
+        function updateVolume() {
+            video.volume = parseFloat(volumeSlider.value);
+            updateVolumeDisplay();
+        }
+
+        function toggleMute() {
+            if (video.volume > 0) {
+                video.dataset.lastVolume = video.volume;
+                video.volume = 0;
+                volumeSlider.value = 0;
+            } else {
+                const lastVolume = video.dataset.lastVolume || 1;
+                video.volume = parseFloat(lastVolume);
+                volumeSlider.value = lastVolume;
+                delete video.dataset.lastVolume;
+            }
+            updateVolumeDisplay();
+        }
+
+        // 调节音量
+        function adjustVolume(delta) {
+            let newVolume = video.volume + delta;
+            newVolume = Math.max(0, Math.min(1, newVolume)); // 限制在0-1之间
+            
+            video.volume = newVolume;
+            volumeSlider.value = newVolume;
+            updateVolumeDisplay();
+            
+            showVolumeChangeHint(newVolume);
+        }
+        
+        // 用快捷键时显示音量提示
+        function showVolumeChangeHint(volume) {
+            const percent = Math.round(volume * 100);
+            const hint = document.createElement('div');
+            hint.className = 'volume-hint';
+            hint.textContent = `音量: ${percent}%`;
+            hint.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 5px;
+                font-size: 14px;
+                z-index: 1000;
+                pointer-events: none;
+                animation: fadeOut 2s ease forwards;
+            `;
+            
+            // 添加淡出动画
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeOut {
+                    0% { opacity: 1; }
+                    70% { opacity: 1; }
+                    100% { opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            videoPlayer.appendChild(hint);
+            
+            // 2秒后移除提示
+            setTimeout(() => {
+                if (hint.parentNode) {
+                    hint.parentNode.removeChild(hint);
+                }
+            }, 2000);
+        }
+
+        // 快进/快退
+        function seekVideo(seconds) {
+            const newTime = video.currentTime + seconds;
+            video.currentTime = Math.max(0, Math.min(video.duration, newTime));
+            updateProgress();
+        }
+
+        // 播放速度控制
+        function toggleSpeed() {
+            speedIndex = (speedIndex + 1) % speeds.length;
+            video.playbackRate = speeds[speedIndex];
+            speedBtn.textContent = `${speeds[speedIndex]}x`;
+        }
+
+        // 全屏控制
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                videoPlayer.requestFullscreen();
+                isInFullscreen = true;
+            } else {
+                document.exitFullscreen();
+                isInFullscreen = false;
+            }
+        }
+        
+        // 键盘快捷键处理
+        function handleKeyDown(e) {
+            // 如果焦点在输入元素上，不处理快捷键
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+            
+            switch (e.key) {
+                case ' ':
+                case 'Spacebar':
+                    e.preventDefault();
+                    togglePlay();
+                    showControls();
+                    break;
+                    
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    seekVideo(-seekStep);
+                    showControls();
+                    break;
+                    
+                case 'ArrowRight':
+                    e.preventDefault();
+                    seekVideo(seekStep);
+                    showControls();
+                    break;
+                    
+                case 'ArrowUp':
+                    e.preventDefault();
+                    adjustVolume(volumeStep);
+                    showControls();
+                    break;
+                    
+                case 'ArrowDown':
+                    e.preventDefault();
+                    adjustVolume(-volumeStep);
+                    showControls();
+                    break;
+                    
+                case 'f':
+                case 'F':
+                    e.preventDefault();
+                    toggleFullscreen();
+                    showControls();
+                    break;
+                    
+                case 'm':
+                case 'M':
+                    e.preventDefault();
+                    toggleMute();
+                    showControls();
+                    break;
+            }
+        }
+
+        // 事件处理器
+        function handleVideoClick() {
+            togglePlay();
+        }
+
+        function handlePlayPauseClick(e) {
+            e.stopPropagation();
+            togglePlay();
+        }
+
+        function handleVideoEnded() {
+            playPauseBtn.textContent = '▶';
+            showControls();
+        }
+
+        function handleWaiting() {
+            loadingEl.style.display = 'block';
+        }
+
+        function handleCanPlay() {
+            loadingEl.style.display = 'none';
+        }
+
+        function handleControlsMouseEnter() {
+            isMouseOverControls = true;
+            showControls();
+        }
+
+        function handleControlsMouseLeave() {
+            isMouseOverControls = false;
+            scheduleHideControls();
+        }
+
+        function handleFullscreenChange() {
+            isInFullscreen = !!document.fullscreenElement;
+            
+            if (!video.paused) {
+                scheduleHideControls();
+            }
+        }
+
+        // 内存清理
+        function cleanup() {
+            clearTimeout(hideControlsTimer);
+            clearTimeout(loadingTimer);
+            
+            // 移除事件监听器
+            video.removeEventListener('click', handleVideoClick);
+            video.removeEventListener('ended', handleVideoEnded);
+            video.removeEventListener('waiting', handleWaiting);
+            video.removeEventListener('canplay', handleCanPlay);
+            video.removeEventListener('timeupdate', updateProgress);
+            video.removeEventListener('loadedmetadata', updateProgress);
+            
+            playPauseBtn.removeEventListener('click', handlePlayPauseClick);
+            progressBar.removeEventListener('click', seek);
+            progressBar.removeEventListener('mousedown', startDrag);
+            
+            if (progressThumb) {
+                progressThumb.removeEventListener('mousedown', startDrag);
+            }
+            
+            volumeSlider.removeEventListener('input', updateVolume);
+            volumeBtn.removeEventListener('click', toggleMute);
+            speedBtn.removeEventListener('click', toggleSpeed);
+            fullscreenBtn.removeEventListener('click', toggleFullscreen);
+            controls.removeEventListener('mouseenter', handleControlsMouseEnter);
+            controls.removeEventListener('mouseleave', handleControlsMouseLeave);
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            document.removeEventListener('keydown', handleKeyDown);
+        }
+
+        // 初始化
+        function init() {
+            cleanup();
+            
+            video.volume = parseFloat(volumeSlider.value);
+            updateVolumeDisplay();
+            
+            video.addEventListener('click', handleVideoClick);
+            video.addEventListener('ended', handleVideoEnded);
+            video.addEventListener('waiting', handleWaiting);
+            video.addEventListener('canplay', handleCanPlay);
+            video.addEventListener('timeupdate', updateProgress);
+            video.addEventListener('loadedmetadata', updateProgress);
+            
+            playPauseBtn.addEventListener('click', handlePlayPauseClick);
+            progressBar.addEventListener('click', seek);
+            progressBar.addEventListener('mousedown', startDrag);
+            
+            if (progressThumb) {
+                progressThumb.addEventListener('mousedown', startDrag);
+            }
+            
+            volumeSlider.addEventListener('input', updateVolume);
+            volumeBtn.addEventListener('click', toggleMute);
+            speedBtn.addEventListener('click', toggleSpeed);
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            controls.addEventListener('mouseenter', handleControlsMouseEnter);
+            controls.addEventListener('mouseleave', handleControlsMouseLeave);
+            document.addEventListener('fullscreenchange', handleFullscreenChange);
+            
+            document.addEventListener('keydown', handleKeyDown);
+            
+            showControls();
+        }
+
+        // 在页面卸载时清理
+        window.addEventListener('beforeunload', cleanup);
+        window.addEventListener('pagehide', cleanup);
+
+        // 启动
+        init();
+    </script>
+</body>
+</html>

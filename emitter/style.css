@@ -1,0 +1,203 @@
+/* style.css */
+:root {
+    /* 默认主题变量 */
+    --bg-color: #000;
+    --emitter-bg: #333;
+    --emitter-border: #0af;
+    --center-light: #0af;
+    --center-light-shadow: 0 0 5px #0af;
+    --beam-gradient: linear-gradient(to right, 
+        rgba(0, 170, 255, 0.9) 0%, 
+        rgba(0, 170, 255, 0.1) 100%);
+    --pressing-border: #ff5500;
+    --pressing-light: #ff5500;
+    --pressing-shadow: 0 0 10px #ff5500;
+    
+    --toggle-bg-dark: #0a0a0a;
+    --toggle-bg-light: #ffffff;
+    --toggle-shadow-dark: rgba(0, 0, 0, 0.5);
+    --toggle-shadow-light: rgba(0, 85, 204, 0.3);
+}
+
+/* 浅色主题变量 */
+body.light-mode {
+    --bg-color: #f0f8ff;
+    --emitter-bg: #e9f6fc;
+    --emitter-border: #0088ff;
+    --center-light: #0088ff;
+    --center-light-shadow: 0 0 5px #0088ff;
+    --beam-gradient: linear-gradient(to right, 
+        rgba(0, 136, 255, 0.9) 0%, 
+        rgba(0, 136, 255, 0.1) 100%);
+    --pressing-border: #ff3300;
+    --pressing-light: #ff3300;
+    --pressing-shadow: 0 0 10px #ff3300;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: var(--bg-color);
+    height: 100vh;
+    transition: background-color 0.3s ease;
+}
+
+/* 发射器主体 */
+#emitter {
+    width: 30px;
+    height: 60px;
+    background: var(--emitter-bg);
+    border-right: 2px solid var(--emitter-border);
+    border-top: 2px solid var(--emitter-border);
+    border-bottom: 2px solid var(--emitter-border);
+    border-radius: 0 50% 50% 0;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    padding-left: 12px;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    user-select: none;
+    z-index: 20;
+}
+
+.center-light {
+    width: 8px;
+    height: 8px;
+    background: var(--center-light);
+    border-radius: 50%;
+    box-shadow: var(--center-light-shadow);
+    transition: all 0.3s ease;
+}
+
+/* 光束元素 */
+.beam-element {
+    position: absolute;
+    height: 2px;
+    background: var(--beam-gradient);
+    opacity: 0;
+    pointer-events: none;
+    transform-origin: left center;
+}
+
+/* 预览光束 */
+#preview-beam {
+    width: 0;
+    z-index: 10;
+    transition: width 0.2s ease-out;
+}
+
+.beam {
+    width: 0;
+}
+
+#emitter.pressing {
+    border-color: var(--pressing-border);
+}
+
+#emitter.pressing .center-light {
+    background: var(--pressing-light);
+    box-shadow: var(--pressing-shadow);
+}
+
+/* 角度指示器 */
+#angle-indicator {
+    position: fixed;
+    color: var(--center-light);
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    top: 60px;
+    right: 20px;
+    z-index: 100;
+    opacity: 0; /* 默认不可见 */
+    transition: opacity 0.3s ease;
+    pointer-events: none; /* 防止干扰 */
+}
+
+/* 仅旋转模式下显示 */
+body.rotation-mode #angle-indicator {
+    opacity: 1;
+}
+
+/* 主题切换按钮 */
+#theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 56px;
+    height: 28px;
+    background: var(--toggle-bg-dark);
+    border: 2px solid var(--emitter-border);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    padding: 0 3px;
+    box-shadow: 0 2px 8px var(--toggle-shadow-dark);
+}
+
+/* 按钮滑块样式 */
+#theme-toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    background: var(--emitter-border);
+    border-radius: 50%;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 默认的切换器样式 */
+.theme-toggle-icon {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    z-index: 1;
+    transition: opacity 0.3s ease, fill 0.3s ease;
+}
+
+#sun-icon {
+    right: 4px;
+    opacity: 0;
+    fill: white;
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8));
+}
+
+#moon-icon {
+    left: 4px;
+    opacity: 1;
+    fill: #ffffe0;
+    filter: drop-shadow(0 0 2px rgba(255, 204, 0, 0.8));
+}
+
+/* 浅色主题的切换器样式 */
+body.light-mode #theme-toggle {
+    background: var(--toggle-bg-light);
+    border-color: #0055cc;
+    box-shadow: 0 2px 8px var(--toggle-shadow-light);
+}
+
+body.light-mode #theme-toggle::after {
+    background: #0055cc;
+    transform: translateX(35px);
+    box-shadow: 0 2px 4px rgba(0, 85, 204, 0.3);
+}
+
+body.light-mode #sun-icon {
+    opacity: 1;
+    fill: #ff9900;
+    filter: drop-shadow(0 0 2px rgba(255, 153, 0, 0.6));
+}
+
+body.light-mode #moon-icon {
+    opacity: 0;
+    fill: #333333;
+}

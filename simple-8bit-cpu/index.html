@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>8位CPU模拟器</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>8 位 CPU 模拟器</h1>
+  </header>
+
+  <main>
+    <div class="container">
+      <!-- 左侧：代码和控制 -->
+      <div class="panel left">
+        <section>
+          <h2>汇编代码</h2>
+          <textarea id="asmInput" rows="18"></textarea>
+          <div class="buttons">
+            <button id="btnAssemble">汇编</button>
+            <button id="btnLoad">加载</button>
+            <button id="btnExample">示例</button>
+            <button id="btnClear">清空</button>
+            <button id="btnHelp">查看用法</button>
+            <button id="btnSave">保存到文件</button>
+          </div>
+        </section>
+
+        <section>
+          <h2>控制</h2>
+          <div class="buttons">
+            <button id="btnStep">单步</button>
+            <button id="btnRun">运行</button>
+            <button id="btnPause" disabled>暂停</button>
+            <button id="btnReset">重置</button>
+          </div>
+          <p class="hint">连续运行时点击"暂停"可停止</p>
+        </section>
+
+        <section>
+        <h2>CPU状态</h2>
+        <div id="status">
+            <div class="status-item">
+            <div class="status-label">累加器 A</div>
+            <div class="status-value hex" id="regA">0x00</div>
+            </div>
+            <div class="status-item">
+            <div class="status-label">寄存器 B</div>
+            <div class="status-value hex" id="regB">0x00</div>
+            </div>
+            <div class="status-item">
+            <div class="status-label">程序计数器 PC</div>
+            <div class="status-value hex" id="regPC">0x00</div>
+            </div>
+            <div class="status-item">
+            <div class="status-label">零标志 Z</div>
+            <div class="status-value flag" id="flagZ">0</div>
+            </div>
+            <div class="status-item">
+            <div class="status-label">进位标志 C</div>
+            <div class="status-value flag" id="flagC">0</div>
+            </div>
+            <div class="status-item">
+            <div class="status-label">执行步数</div>
+            <div class="status-value info" id="steps">0</div>
+            </div>
+            <div class="status-item">
+            <div class="status-label">运行状态</div>
+            <div class="status-value info" id="halted">已暂停</div>
+            </div>
+        </div>
+        </section>
+      </div>
+
+      <!-- 右侧：输出和内存 -->
+      <div class="panel right">
+        <section>
+          <h2>输出</h2>
+          <div id="output" class="log"></div>
+        </section>
+
+        <section>
+          <div class="section-header">
+            <h2>调试日志</h2>
+              <div class="header-buttons">
+                <button id="btnSaveLog">保存到文件</button>
+                <button id="btnClearLog">清空</button>
+              </div>
+          </div>
+          <div id="debugLog" class="log debug"></div>
+        </section>
+
+        <section>
+          <h2>内存 (0x00–0xFF)</h2>
+          <div id="memoryView" class="memory"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- 帮助模态框 -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>指令与寻址模式说明</h2>
+                <button id="btnCloseHelp" class="close-btn">×</button>
+            </div>
+            <div id="helpContent" class="modal-body">
+            </div>
+        </div>
+    </div>
+    </div>
+  </main>
+
+  <script src="cpu.js"></script>
+  <script src="assembler.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
